@@ -17,7 +17,8 @@ folder = r"c:\Users\Esteban\Desktop\visionmeteor\backend\data\ejemplos_demostrac
 casos = [
     ("HURACAN", "huracan_vis.jpg", "huracan_ir.jpg"),
     ("TARAPACA NUBES", "tarapaca_camanchaca_vis.jpg", "tarapaca_camanchaca_ir.jpg"),
-    ("TARAPACA DESPEJADO", "tarapaca_despejado_vis.jpg", "tarapaca_despejado_ir.jpg")
+    ("TARAPACA DESPEJADO", "tarapaca_despejado_vis.jpg", "tarapaca_despejado_ir.jpg"),
+    ("TARAPACA PARCIAL", "tarapaca_nubosidad_parcial_vis.jpg", "tarapaca_nubosidad_parcial_ir.jpg")
 ]
 
 for nombre, vis_file, ir_file in casos:
