@@ -1,63 +1,56 @@
 # 🛰️ VisionMeteor: Sistema de Clasificación Meteorológica
 
-Sistema avanzado para la clasificación meteorológica píxel por píxel de imágenes satelitales (NOAA/Meteor) obtenidas vía RTL-SDR. Utiliza técnicas vectorizadas de Visión por Computadora con OpenCV y NumPy para analizar la nubosidad y clasificar amenazas meteorológicas (Tormentas, Cirros, etc.).
+Plataforma Full-Stack para la clasificación meteorológica de imágenes satelitales (NOAA/Meteor) obtenidas vía RTL-SDR. 
+
+## 🏗️ Arquitectura del Proyecto
+
+El proyecto está dividido en dos capas principales:
+
+- **Backend (`/backend`)**: Motor en Python puro impulsado por FastAPI, OpenCV y NumPy. Se encarga de procesar las imágenes térmicas y visibles, generar la clasificación de nubes vectorizada (milisegundos) y servir los reportes vía API REST.
+- **Frontend (`/frontend`)**: Dashboard interactivo en Next.js (React) que consume la API del backend para mostrar tarjetas de métricas, niveles de riesgo, y los mapas generados de forma visual.
+
+Para más detalles técnicos sobre el flujo de datos desde el RTL-SDR hasta la web, consulta [docs/arquitectura.md](docs/arquitectura.md).
 
 ## 🚀 Requisitos Previos
 
-Asegúrate de tener Python 3.8+ instalado en tu sistema. Luego, instala las dependencias necesarias ejecutando:
+- Python 3.8+
+- Node.js 18+ y npm
+
+## ⚙️ Instalación y Uso
+
+### 1. Iniciar el Backend (Python)
+Abre una terminal y navega a la carpeta principal del proyecto:
 
 ```bash
-pip install opencv-python numpy Pillow
+# 1. Instala las dependencias del motor
+pip install -r backend/requirements.txt
+
+# 2. Coloca tus imágenes satelitales en la carpeta de inputs:
+# backend/data/inputs/imagen_visible.jpg
+# backend/data/inputs/imagen_infrarroja.jpg
+
+# 3. Ejecuta el clasificador meteorológico (Procesamiento)
+python backend/core/clasificador_v11.py
+
+# 4. Inicia la API para servir los datos al frontend
+uvicorn backend.api.main:app --reload --port 8000
 ```
+> *Nota: Tras ejecutar el clasificador (Paso 3), los mapas resultantes y el `reporte_meteorologico.json` se generarán automáticamente en `backend/data/outputs/`.*
 
-## 📸 Paso a Paso: Cómo usar el sistema correctamente
-
-Para que el script funcione, necesitas proveer dos imágenes satelitales de la **misma zona geográfica y en el mismo instante** (usualmente extraídas de programas como WXtoImg o SatDump).
-
-### 1. Preparar las imágenes
-1. **`imagen_visible.jpg`**: Una imagen satelital normal en luz visible (RGB). El sistema utilizará esto para determinar el brillo (detectar qué es nube y qué es superficie) y la textura de la imagen (detectar turbulencias o nubes de gran desarrollo vertical como los Cumulonimbus).
-2. **`imagen_infrarroja.jpg`**: Una imagen infrarroja (IR) termal en **falso color**. El sistema usará el canal de color Rojo para medir la frialdad (congelamiento en cumbres de nubes altas) y el canal Azul para detectar focos cálidos (como el océano).
-
-> [!IMPORTANT]  
-> Ambas imágenes deben estar alineadas y representar exactamente la misma perspectiva. Si provienen del mismo pase satelital, coincidirán. 
-
-### 2. Renombrar y ubicar los archivos
-Coloca ambas imágenes en la misma carpeta donde se encuentra el script `analisis_meteorologico.py`. 
-Asegúrate de renombrarlas exactamente con los siguientes nombres:
-
-```text
-visionmeteor/
-│
-├── analisis_meteorologico.py
-├── imagen_visible.jpg        <-- (¡Importante! Renombrar así)
-├── imagen_infrarroja.jpg     <-- (¡Importante! Renombrar así)
-└── README.md
-```
-
-### 3. Ejecutar el Análisis
-Abre tu terminal (Símbolo del sistema, PowerShell o Terminal de VS Code), navega a la carpeta del proyecto y ejecuta el script:
+### 2. Iniciar el Frontend (Next.js)
+Abre una segunda terminal:
 
 ```bash
-python analisis_meteorologico.py
+cd frontend
+npm install
+npm run dev
 ```
 
-### 4. Comprender los Resultados Generados
-Gracias a la vectorización de NumPy, el sistema procesará millones de píxeles en fracciones de segundo y generará las siguientes salidas:
+El Dashboard estará disponible en `http://localhost:3000`.
 
-- **Imágenes de Visualización** (Se crearán en una carpeta llamada `resultados_v11_pixel_por_pixel/`):
-  1. `01_mapa_clasificacion_[fecha].jpg`: El lienzo limpio con colores sólidos de la clasificación (Rojo=Tormenta, Cian=Cirros, etc.).
-  2. `02_mapa_con_panel_[fecha].jpg`: La misma imagen pero con una Interfaz (UI) flotante con porcentajes y nivel de amenaza.
-  3. `03_comparacion_[fecha].jpg`: Una imagen ancha comparando lado a lado tu foto visible contra el mapa resultante.
-  4. `04_visualizacion_canales_IR_[fecha].jpg`: Diagnóstico para que veas cómo el script interpretó el frío y el calor de la imagen infrarroja.
-
-- **Reporte de Datos JSON (Backend / Frontend)**:
-  - Se creará un archivo `reporte_meteorologico.json` en la raíz de la carpeta.
-  - Contiene los contadores de píxeles, porcentajes exactos, y la amenaza principal identificada. 
-  - Este archivo es la pieza clave para que conectes el motor de Python con una futura interfaz web o aplicación construida en Next.js.
-
-## 🛠️ Modificar la Sensibilidad (Opcional)
-Si notas que tu antena/receptor RTL-SDR arroja imágenes más oscuras o más claras de lo normal y el script clasifica mal, puedes calibrar el motor fácilmente modificando los umbrales ubicados al inicio de `analisis_meteorologico.py` (líneas 23 al 26):
-- `UMBRAL_BRILLO_NUBE = 85`: Auméntalo si el script clasifica la tierra como nube.
-- `UMBRAL_IR_FRIO = 150`: Auméntalo si hay demasiadas falsas alertas de tormenta.
-- `UMBRAL_IR_CALIDO = 200`: Umbral de calor oceánico.
-- `UMBRAL_TEXTURA_ALTA = 45`: Magnitud de la rugosidad para detectar una tormenta eléctrica vs un cirro inofensivo.
+## 🛠️ Calibración del Clasificador
+Puedes afinar la sensibilidad del sistema modificando los umbrales en `backend/core/clasificador_v11.py`:
+- `UMBRAL_BRILLO_NUBE = 85`: Auméntalo si clasifica tierra como nube.
+- `UMBRAL_IR_FRIO = 150`: Frialdad mínima (Canal Rojo) para considerar tormentas.
+- `UMBRAL_IR_CALIDO = 200`: Calor (Canal Azul) para el océano.
+- `UMBRAL_TEXTURA_ALTA = 45`: Magnitud Laplaciana para Cumulonimbus.
