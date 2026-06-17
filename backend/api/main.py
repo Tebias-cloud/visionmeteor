@@ -113,8 +113,7 @@ def ejecutar_analisis():
             if 'heatmap' in archivos:
                 rutas_absolutas['heatmap'] = os.path.join(OUTPUTS_DIR, archivos['heatmap'])
                 
-            generador = pdf.GeneradorPDF()
-            generador.generar_boletin(reporte, rutas_absolutas, ruta_pdf)
+            pdf.generar_boletin(reporte, rutas_absolutas, ruta_pdf)
             reporte["boletin_pdf"] = "boletin_meteorologico.pdf"
         except ImportError:
             print("Librería fpdf2 no instalada. Omitiendo generación de PDF.")
